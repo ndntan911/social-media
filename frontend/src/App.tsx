@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import CreatePost from "./pages/CreatePost";
 import Profile from "./pages/Profile";
+import AuthCallback from "./pages/AuthCallback";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -67,6 +68,7 @@ const AppRoutes: React.FC = () => {
                 </PublicRoute>
               }
             />
+            <Route path="/auth/callback" element={<AuthCallback />} />
 
             {/* Protected Routes */}
             <Route
