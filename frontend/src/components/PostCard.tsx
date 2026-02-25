@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import type { Post } from "../types";
 import { likeAPI, commentAPI, postAPI } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
+import MediaGallery from "./MediaGallery";
 
 interface PostCardProps {
   post: Post;
@@ -135,13 +136,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete }) => {
         )}
       </div>
 
-      {/* Post Image */}
+      {/* Post Media */}
       <div className="relative">
-        <img
-          src={`/uploads/${post.image}`}
-          alt={post.caption}
-          className="w-full object-cover max-h-96"
-        />
+        <MediaGallery media={post.media} className="max-h-96" />
       </div>
 
       {/* Post Actions */}

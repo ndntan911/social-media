@@ -22,7 +22,6 @@ const Profile: React.FC = () => {
   useEffect(() => {
     if (username) {
       fetchProfile();
-      fetchUserPosts();
       checkFollowStatus();
     }
   }, [username]);
@@ -39,6 +38,7 @@ const Profile: React.FC = () => {
     try {
       const response = await userAPI.getProfile(username!);
       setProfileUser(response.data.user);
+      fetchUserPosts(response.data.user.id);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load profile");
     } finally {
@@ -46,9 +46,9 @@ const Profile: React.FC = () => {
     }
   };
 
-  const fetchUserPosts = async () => {
+  const fetchUserPosts = async (userId: string) => {
     try {
-      const response = await postAPI.getUserPosts(profileUser?.id || "");
+      const response = await postAPI.getUserPosts(userId || "");
       setPosts(response.data.data || response.data.posts || []);
     } catch (err: any) {
       console.error("Failed to load posts:", err);

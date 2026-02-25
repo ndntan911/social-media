@@ -7,23 +7,27 @@ const rateLimit = require("express-rate-limit");
 const session = require("express-session");
 const passport = require("./config/passport");
 const path = require("path");
+const { initializeBucket } = require("./config/minio");
+
+// Import routes
+const authRoutes = require("./routes/auth");
+const userRoutes = require("./routes/users");
+const postRoutes = require("./routes/posts");
+const followRoutes = require("./routes/follow");
+const likeRoutes = require("./routes/like");
+const commentRoutes = require("./routes/comment");
 
 const app = express();
 
 // Security middleware
 app.use(helmet());
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  }),
-);
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
 });
+
 if (process.env.NODE_ENV === "production") {
   app.use(limiter);
 }
@@ -31,6 +35,16 @@ if (process.env.NODE_ENV === "production") {
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+// CORS configuration
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
 // Session middleware for OAuth
 app.use(
@@ -41,6 +55,9 @@ app.use(
     cookie: { secure: false }, // Set to true in production with HTTPS
   }),
 );
+
+// Initialize MinIO bucket
+initializeBucket();
 
 // Initialize Passport
 app.use(passport.initialize());

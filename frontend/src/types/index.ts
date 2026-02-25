@@ -1,3 +1,9 @@
+export interface Media {
+  type: 'image' | 'video';
+  url: string;
+  thumbnail: string;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -23,7 +29,7 @@ export interface Post {
     username: string;
     profilePicture: string;
   };
-  image: string;
+  media: Media[];
   caption: string;
   location: string;
   tags: string[];
@@ -31,6 +37,7 @@ export interface Post {
   comments: Comment[];
   likesCount: number;
   commentsCount: number;
+  mediaCount: number;
   createdAt: string;
 }
 
