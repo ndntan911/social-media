@@ -26,7 +26,7 @@ type AuthAction =
 const initialState: AuthState = {
   user: null,
   token: localStorage.getItem("token"),
-  isLoading: false,
+  isLoading: true,
   isAuthenticated: false,
 };
 
