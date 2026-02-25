@@ -54,7 +54,7 @@ export const postAPI = {
     },
   }),
 
-  getFeed: (page = 1, limit = 10) => 
+  getFeed: (page = 1, limit = 5) => 
     api.get(`/posts/feed?page=${page}&limit=${limit}`),
 
   getPost: (postId: string) => api.get<{ post: Post }>(`/posts/${postId}`),
