@@ -16,6 +16,7 @@ const postRoutes = require("./routes/posts");
 const followRoutes = require("./routes/follow");
 const likeRoutes = require("./routes/like");
 const commentRoutes = require("./routes/comment");
+const exploreRoutes = require("./routes/explore");
 
 const app = express();
 
@@ -85,6 +86,7 @@ app.use("/api/posts", require("./routes/posts"));
 app.use("/api/follow", require("./routes/follow"));
 app.use("/api/like", require("./routes/like"));
 app.use("/api/comment", require("./routes/comment"));
+app.use("/api/explore", require("./routes/explore"));
 
 // Basic route
 app.get("/", (req, res) => {

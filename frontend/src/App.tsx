@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import CreatePost from "./pages/CreatePost";
 import Profile from "./pages/Profile";
+import Explore from "./pages/Explore";
 import AuthCallback from "./pages/AuthCallback";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
@@ -84,6 +85,14 @@ const AppRoutes: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/explore"
+              element={
+                <ProtectedRoute>
+                  <Explore />
                 </ProtectedRoute>
               }
             />
