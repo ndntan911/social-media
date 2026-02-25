@@ -120,6 +120,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } finally {
           dispatch({ type: "SET_LOADING", payload: false });
         }
+      } else {
+        dispatch({ type: "SET_LOADING", payload: false });
       }
     };
 

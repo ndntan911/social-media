@@ -31,15 +31,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
 };
 
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
+  const { isAuthenticated } = useAuth();
 
   return !isAuthenticated ? <>{children}</> : <Navigate to="/" />;
 };

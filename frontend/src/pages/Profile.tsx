@@ -1,19 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { userAPI, postAPI, followAPI } from '../utils/api';
-import type { User, Post } from '../types';
-import { useAuth } from '../context/AuthContext';
-import PostCard from '../components/PostCard';
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { userAPI, postAPI, followAPI } from "../utils/api";
+import type { User, Post } from "../types";
+import { useAuth } from "../context/AuthContext";
+import ProfileTabs from "../components/ProfileTabs";
 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const { user: currentUser } = useAuth();
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [followers, setFollowers] = useState<User[]>([]);
+  const [following, setFollowing] = useState<User[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'posts' | 'followers' | 'following'>('posts');
+  const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<
+    "posts" | "followers" | "following"
+  >("posts");
 
   useEffect(() => {
     if (username) {
@@ -23,12 +27,20 @@ const Profile: React.FC = () => {
     }
   }, [username]);
 
+  useEffect(() => {
+    if (activeTab === "followers" && profileUser) {
+      fetchFollowers();
+    } else if (activeTab === "following" && profileUser) {
+      fetchFollowing();
+    }
+  }, [activeTab, profileUser]);
+
   const fetchProfile = async () => {
     try {
       const response = await userAPI.getProfile(username!);
       setProfileUser(response.data.user);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load profile');
+      setError(err.response?.data?.message || "Failed to load profile");
     } finally {
       setLoading(false);
     }
@@ -36,21 +48,40 @@ const Profile: React.FC = () => {
 
   const fetchUserPosts = async () => {
     try {
-      const response = await postAPI.getUserPosts(profileUser?.id || '');
+      const response = await postAPI.getUserPosts(profileUser?.id || "");
       setPosts(response.data.data || response.data.posts || []);
     } catch (err: any) {
-      console.error('Failed to load posts:', err);
+      console.error("Failed to load posts:", err);
+    }
+  };
+
+  const fetchFollowers = async () => {
+    try {
+      const response = await followAPI.getFollowers(profileUser?.id || "");
+      setFollowers(response.data.followers || []);
+    } catch (err: any) {
+      console.error("Failed to load followers:", err);
+    }
+  };
+
+  const fetchFollowing = async () => {
+    try {
+      const response = await followAPI.getFollowing(profileUser?.id || "");
+      setFollowing(response.data.following || []);
+    } catch (err: any) {
+      console.error("Failed to load following:", err);
     }
   };
 
   const checkFollowStatus = async () => {
-    if (!currentUser || !profileUser || currentUser.id === profileUser.id) return;
-    
+    if (!currentUser || !profileUser || currentUser.id === profileUser.id)
+      return;
+
     try {
       const response = await followAPI.checkFollowStatus(profileUser.id);
       setIsFollowing(response.data.isFollowing);
     } catch (error) {
-      console.error('Error checking follow status:', error);
+      console.error("Error checking follow status:", error);
     }
   };
 
@@ -61,31 +92,65 @@ const Profile: React.FC = () => {
       if (isFollowing) {
         await followAPI.unfollowUser(profileUser.id);
         setIsFollowing(false);
-        setProfileUser(prev => prev ? {
-          ...prev,
-          followersCount: (prev.followersCount || 0) - 1
-        } : null);
+        setProfileUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                followersCount: (prev.followersCount || 0) - 1,
+              }
+            : null,
+        );
       } else {
         await followAPI.followUser(profileUser.id);
         setIsFollowing(true);
-        setProfileUser(prev => prev ? {
-          ...prev,
-          followersCount: (prev.followersCount || 0) + 1
-        } : null);
+        setProfileUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                followersCount: (prev.followersCount || 0) + 1,
+              }
+            : null,
+        );
       }
     } catch (error) {
-      console.error('Error toggling follow:', error);
+      console.error("Error toggling follow:", error);
     }
   };
 
   const handlePostUpdate = (updatedPost: Post) => {
-    setPosts(prev => 
-      prev.map(post => post.id === updatedPost.id ? updatedPost : post)
+    setPosts((prev) =>
+      prev.map((post) => (post.id === updatedPost.id ? updatedPost : post)),
     );
   };
 
   const handlePostDelete = (postId: string) => {
-    setPosts(prev => prev.filter(post => post.id !== postId));
+    setPosts((prev) => prev.filter((post) => post.id !== postId));
+  };
+
+  const handleFollowUser = async (user: User) => {
+    if (!currentUser) return;
+
+    try {
+      await followAPI.followUser(user.id);
+      // Update following list to include the user
+      setFollowing((prev) => [...prev, user]);
+    } catch (error) {
+      console.error("Error following user:", error);
+    }
+  };
+
+  const handleUnfollowUser = async (user: User) => {
+    if (!currentUser) return;
+
+    try {
+      await followAPI.unfollowUser(user.id);
+      // Update the following list to remove the user
+      setFollowing((prev) => prev.filter((u) => u.id !== user.id));
+      // Update followers list to include the user (they're no longer following)
+      setFollowers((prev) => [...prev, user]);
+    } catch (error) {
+      console.error("Error unfollowing user:", error);
+    }
   };
 
   if (loading) {
@@ -99,7 +164,7 @@ const Profile: React.FC = () => {
   if (error || !profileUser) {
     return (
       <div className="text-center py-12">
-        <div className="text-red-600 mb-4">{error || 'User not found'}</div>
+        <div className="text-red-600 mb-4">{error || "User not found"}</div>
       </div>
     );
   }
@@ -113,7 +178,10 @@ const Profile: React.FC = () => {
         <div className="flex items-start space-x-6">
           {/* Profile Picture */}
           <img
-            src={profileUser.profilePicture || `https://ui-avatars.com/api/?name=${profileUser.username}&background=random&size=150`}
+            src={
+              profileUser.profilePicture ||
+              `https://ui-avatars.com/api/?name=${profileUser.username}&background=random&size=150`
+            }
             alt={profileUser.username}
             className="w-32 h-32 rounded-full object-cover"
           />
@@ -122,18 +190,18 @@ const Profile: React.FC = () => {
           <div className="flex-1">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-2xl font-bold">{profileUser.username}</h1>
-              
+
               {/* Follow Button */}
               {!isOwnProfile && (
                 <button
                   onClick={handleFollow}
-                  className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-md font-medium transition-colors hover:cursor-pointer ${
                     isFollowing
-                      ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                      : "bg-indigo-600 text-white hover:bg-indigo-700"
                   }`}
                 >
-                  {isFollowing ? 'Unfollow' : 'Follow'}
+                  {isFollowing ? "Unfollow" : "Follow"}
                 </button>
               )}
             </div>
@@ -141,23 +209,37 @@ const Profile: React.FC = () => {
             {/* Stats */}
             <div className="flex space-x-8 mb-4">
               <div className="text-center">
-                <div className="font-semibold text-lg">{profileUser.postsCount || 0}</div>
+                <div className="font-semibold text-lg">
+                  {profileUser.postsCount || 0}
+                </div>
                 <div className="text-gray-500 text-sm">posts</div>
               </div>
-              <div className="text-center">
-                <div className="font-semibold text-lg">{profileUser.followersCount || 0}</div>
+              <button
+                onClick={() => setActiveTab("followers")}
+                className="text-center hover:opacity-80 transition-opacity"
+              >
+                <div className="font-semibold text-lg">
+                  {profileUser.followersCount || 0}
+                </div>
                 <div className="text-gray-500 text-sm">followers</div>
-              </div>
-              <div className="text-center">
-                <div className="font-semibold text-lg">{profileUser.followingCount || 0}</div>
+              </button>
+              <button
+                onClick={() => setActiveTab("following")}
+                className="text-center hover:opacity-80 transition-opacity"
+              >
+                <div className="font-semibold text-lg">
+                  {profileUser.followingCount || 0}
+                </div>
                 <div className="text-gray-500 text-sm">following</div>
-              </div>
+              </button>
             </div>
 
             {/* Bio */}
             <div>
               <h2 className="font-semibold">{profileUser.fullName}</h2>
-              {profileUser.bio && <p className="text-gray-600 mt-1">{profileUser.bio}</p>}
+              {profileUser.bio && (
+                <p className="text-gray-600 mt-1">{profileUser.bio}</p>
+              )}
               {profileUser.isVerified && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-2">
                   ✓ Verified
@@ -172,31 +254,31 @@ const Profile: React.FC = () => {
       <div className="bg-white rounded-lg shadow-md mb-6">
         <div className="flex border-b">
           <button
-            onClick={() => setActiveTab('posts')}
+            onClick={() => setActiveTab("posts")}
             className={`flex-1 py-3 text-center font-medium transition-colors ${
-              activeTab === 'posts'
-                ? 'text-indigo-600 border-b-2 border-indigo-600'
-                : 'text-gray-600 hover:text-gray-800'
+              activeTab === "posts"
+                ? "text-indigo-600 border-b-2 border-indigo-600"
+                : "text-gray-600 hover:text-gray-800"
             }`}
           >
             Posts
           </button>
           <button
-            onClick={() => setActiveTab('followers')}
+            onClick={() => setActiveTab("followers")}
             className={`flex-1 py-3 text-center font-medium transition-colors ${
-              activeTab === 'followers'
-                ? 'text-indigo-600 border-b-2 border-indigo-600'
-                : 'text-gray-600 hover:text-gray-800'
+              activeTab === "followers"
+                ? "text-indigo-600 border-b-2 border-indigo-600"
+                : "text-gray-600 hover:text-gray-800"
             }`}
           >
             Followers
           </button>
           <button
-            onClick={() => setActiveTab('following')}
+            onClick={() => setActiveTab("following")}
             className={`flex-1 py-3 text-center font-medium transition-colors ${
-              activeTab === 'following'
-                ? 'text-indigo-600 border-b-2 border-indigo-600'
-                : 'text-gray-600 hover:text-gray-800'
+              activeTab === "following"
+                ? "text-indigo-600 border-b-2 border-indigo-600"
+                : "text-gray-600 hover:text-gray-800"
             }`}
           >
             Following
@@ -206,38 +288,19 @@ const Profile: React.FC = () => {
 
       {/* Tab Content */}
       <div>
-        {activeTab === 'posts' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onUpdate={handlePostUpdate}
-                onDelete={isOwnProfile ? handlePostDelete : undefined}
-              />
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'followers' && (
-          <div className="text-center py-12 text-gray-500">
-            <p>Followers functionality coming soon...</p>
-          </div>
-        )}
-
-        {activeTab === 'following' && (
-          <div className="text-center py-12 text-gray-500">
-            <p>Following functionality coming soon...</p>
-          </div>
-        )}
+        <ProfileTabs
+          activeTab={activeTab}
+          posts={posts}
+          followers={followers}
+          following={following}
+          currentUser={currentUser}
+          isOwnProfile={isOwnProfile}
+          onPostUpdate={handlePostUpdate}
+          onPostDelete={handlePostDelete}
+          onFollowUser={handleFollowUser}
+          onUnfollowUser={handleUnfollowUser}
+        />
       </div>
-
-      {/* Empty State */}
-      {activeTab === 'posts' && posts.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <p>No posts yet.</p>
-        </div>
-      )}
     </div>
   );
 };
