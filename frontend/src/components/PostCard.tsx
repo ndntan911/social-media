@@ -138,7 +138,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete }) => {
 
       {/* Post Media */}
       <div className="relative">
-        <MediaGallery media={post.media} className="max-h-96" />
+        <MediaGallery media={post.media} className="max-h-[600px]" />
       </div>
 
       {/* Post Actions */}

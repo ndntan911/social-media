@@ -224,7 +224,14 @@ router.get("/feed", auth, async (req, res) => {
       user: { $in: followingIds },
     })
       .populate("user", "username profilePicture")
-      .populate("comments.user", "username profilePicture")
+      .populate({
+        path: "comments",
+        populate: {
+          path: "user",
+          select: "username profilePicture",
+        },
+        options: { sort: { createdAt: -1 } },
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -256,6 +263,14 @@ router.get("/user/:userId", async (req, res) => {
 
     const posts = await Post.find({ user: req.params.userId })
       .populate("user", "username profilePicture")
+      .populate({
+        path: "comments",
+        populate: {
+          path: "user",
+          select: "username profilePicture",
+        },
+        options: { sort: { createdAt: -1 } },
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -281,7 +296,14 @@ router.get("/:postId", async (req, res) => {
   try {
     const post = await Post.findById(req.params.postId)
       .populate("user", "username profilePicture")
-      .populate("comments.user", "username profilePicture");
+      .populate({
+        path: "comments",
+        populate: {
+          path: "user",
+          select: "username profilePicture",
+        },
+        options: { sort: { createdAt: -1 } },
+      });
 
     if (!post) {
       return res.status(404).json({ message: "Post not found" });

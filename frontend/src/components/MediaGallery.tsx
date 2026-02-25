@@ -30,11 +30,7 @@ const MediaGallery: React.FC<MediaGalleryProps> = ({
       );
     } else {
       return (
-        <img
-          src={mediaItem.url}
-          alt="Post media"
-          className="w-full h-full object-cover"
-        />
+        <img src={mediaItem.url} alt="Post media" className="h-full mx-auto" />
       );
     }
   };
