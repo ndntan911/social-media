@@ -1,11 +1,11 @@
-import React from 'react';
-import PostsTab from './PostsTab';
-import FollowersTab from './FollowersTab';
-import FollowingTab from './FollowingTab';
-import type { User, Post } from '../types';
+import React from "react";
+import PostsTab from "./PostsTab";
+import FollowersTab from "./FollowersTab";
+import FollowingTab from "./FollowingTab";
+import type { User, Post } from "../types";
 
 interface ProfileTabsProps {
-  activeTab: 'posts' | 'followers' | 'following';
+  activeTab: "posts" | "followers" | "following";
   posts: Post[];
   followers: User[];
   following: User[];
@@ -30,7 +30,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   onUnfollowUser,
 }) => {
   switch (activeTab) {
-    case 'posts':
+    case "posts":
       return (
         <PostsTab
           posts={posts}
@@ -39,21 +39,17 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           onPostDelete={onPostDelete}
         />
       );
-    case 'followers':
+    case "followers":
       return (
         <FollowersTab
           followers={followers}
           currentUser={currentUser}
-          following={following}
           onFollowUser={onFollowUser}
         />
       );
-    case 'following':
+    case "following":
       return (
-        <FollowingTab
-          following={following}
-          onUnfollowUser={onUnfollowUser}
-        />
+        <FollowingTab following={following} onUnfollowUser={onUnfollowUser} />
       );
     default:
       return null;

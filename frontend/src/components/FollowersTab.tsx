@@ -43,9 +43,15 @@ const FollowersTab: React.FC<FollowersTabProps> = ({
             {currentUser?.id !== user.id && (
               <button
                 onClick={() => onFollowUser(user)}
-                className="px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 transition-colors hover:cursor-pointer"
+                className={`px-3 py-1  text-sm rounded-md  transition-colors hover:cursor-pointer ${
+                  currentUser?.following.includes(user.id)
+                    ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                    : "bg-indigo-600 text-white hover:bg-indigo-700"
+                }`}
               >
-                Follow
+                {currentUser?.following.includes(user.id)
+                  ? "Unfollow"
+                  : "Follow"}
               </button>
             )}
           </div>

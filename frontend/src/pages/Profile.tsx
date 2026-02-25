@@ -7,7 +7,7 @@ import ProfileTabs from "../components/ProfileTabs";
 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, updateUser } = useAuth();
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [followers, setFollowers] = useState<User[]>([]);
@@ -131,9 +131,38 @@ const Profile: React.FC = () => {
     if (!currentUser) return;
 
     try {
-      await followAPI.followUser(user.id);
-      // Update following list to include the user
-      setFollowing((prev) => [...prev, user]);
+      const isFollowing = currentUser?.following.find((id) => id === user.id);
+      if (isFollowing) {
+        await followAPI.unfollowUser(user.id);
+        setProfileUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                followingCount: (prev.followingCount || 0) - 1,
+              }
+            : null,
+        );
+        updateUser({
+          ...currentUser,
+          following: currentUser.following.filter((id) => id !== user.id),
+        });
+      } else {
+        await followAPI.followUser(user.id);
+        // Update following list to include the user
+        setFollowing((prev) => [...prev, user]);
+        setProfileUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                followingCount: (prev.followingCount || 0) + 1,
+              }
+            : null,
+        );
+        updateUser({
+          ...currentUser,
+          following: [...currentUser.following, user.id],
+        });
+      }
     } catch (error) {
       console.error("Error following user:", error);
     }
@@ -146,6 +175,14 @@ const Profile: React.FC = () => {
       await followAPI.unfollowUser(user.id);
       // Update the following list to remove the user
       setFollowing((prev) => prev.filter((u) => u.id !== user.id));
+      setProfileUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              followersCount: (prev.followersCount || 0) - 1,
+            }
+          : null,
+      );
       // Update followers list to include the user (they're no longer following)
       setFollowers((prev) => [...prev, user]);
     } catch (error) {
