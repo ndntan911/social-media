@@ -20,6 +20,7 @@ const likeRoutes = require("./routes/like");
 const commentRoutes = require("./routes/comment");
 const exploreRoutes = require("./routes/explore");
 const notificationRoutes = require("./routes/notifications");
+const storyRoutes = require("./routes/stories");
 
 const app = express();
 
@@ -83,14 +84,15 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Routes
-app.use("/api/auth", require("./routes/auth"));
-app.use("/api/users", require("./routes/users"));
-app.use("/api/posts", require("./routes/posts"));
-app.use("/api/follow", require("./routes/follow"));
-app.use("/api/like", require("./routes/like"));
-app.use("/api/comment", require("./routes/comment"));
-app.use("/api/explore", require("./routes/explore"));
-app.use("/api/notifications", require("./routes/notifications"));
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/posts", postRoutes);
+app.use("/api/follow", followRoutes);
+app.use("/api/like", likeRoutes);
+app.use("/api/comment", commentRoutes);
+app.use("/api/explore", exploreRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/stories", storyRoutes);
 
 // Basic route
 app.get("/", (req, res) => {

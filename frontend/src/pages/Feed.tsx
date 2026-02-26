@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { postAPI } from "../apis";
 import type { Post } from "../types";
 import PostCard from "../components/PostCard";
+import Stories from "../components/Stories";
+import StoryViewer from "../components/StoryViewer";
+import CreateStory from "../components/CreateStory";
 
 const Feed: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -12,6 +15,8 @@ const Feed: React.FC = () => {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
   const lastPostRef = useRef<HTMLDivElement | null>(null);
+  const [selectedStory, setSelectedStory] = useState<any>(null);
+  const [showCreateStory, setShowCreateStory] = useState(false);
 
   const fetchPosts = useCallback(
     async (pageNum = 1, append = false) => {
@@ -93,35 +98,34 @@ const Feed: React.FC = () => {
     setPosts((prev) => prev.filter((post) => post.id !== postId));
   };
 
-  if (loading && posts.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-red-600 mb-4">{error}</div>
-        <button
-          onClick={() => fetchPosts()}
-          className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-2xl mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6 text-center">Feed</h1>
+    <div className="max-w-2xl mx-auto px-4 py-6">
+      {/* Stories Section */}
+      <Stories
+        onStoryClick={(story) => setSelectedStory(story)}
+        onAddStory={() => setShowCreateStory(true)}
+      />
 
-      {posts.length === 0 && !loading ? (
-        <div className="text-center py-12 text-gray-500">
-          <p>No posts yet. Follow some users to see their posts!</p>
+      {/* Posts Section */}
+      {loading && posts.length === 0 ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={() => fetchPosts()}
+            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+          >
+            Try Again
+          </button>
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">
+            No posts yet. Follow some users to see their posts!
+          </p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -148,19 +152,6 @@ const Feed: React.FC = () => {
             </div>
           )}
 
-          {/* Fallback Load More button */}
-          {/* {hasMore && !isFetchingMore && (
-            <div className="text-center py-4">
-              <button
-                onClick={loadMore}
-                className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 disabled:opacity-50"
-                disabled={loading}
-              >
-                {loading ? "Loading..." : "Load More"}
-              </button>
-            </div>
-          )} */}
-
           {/* No more posts indicator */}
           {!hasMore && posts.length > 0 && (
             <div className="text-center py-4 text-gray-500">
@@ -168,6 +159,25 @@ const Feed: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Story Viewer Modal */}
+      {selectedStory && (
+        <StoryViewer
+          stories={[selectedStory]} // For now, just show the selected story
+          onClose={() => setSelectedStory(null)}
+        />
+      )}
+
+      {/* Create Story Modal */}
+      {showCreateStory && (
+        <CreateStory
+          onClose={() => setShowCreateStory(false)}
+          onStoryCreated={() => {
+            setShowCreateStory(false);
+            // Refresh stories
+          }}
+        />
       )}
     </div>
   );
