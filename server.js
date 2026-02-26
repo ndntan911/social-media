@@ -17,6 +17,7 @@ const followRoutes = require("./routes/follow");
 const likeRoutes = require("./routes/like");
 const commentRoutes = require("./routes/comment");
 const exploreRoutes = require("./routes/explore");
+const notificationRoutes = require("./routes/notifications");
 
 const app = express();
 
@@ -87,6 +88,7 @@ app.use("/api/follow", require("./routes/follow"));
 app.use("/api/like", require("./routes/like"));
 app.use("/api/comment", require("./routes/comment"));
 app.use("/api/explore", require("./routes/explore"));
+app.use("/api/notifications", require("./routes/notifications"));
 
 // Basic route
 app.get("/", (req, res) => {

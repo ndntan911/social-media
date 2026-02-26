@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { userAPI } from "../apis/userAPI";
+import { notificationAPI } from "../apis/notificationAPI";
 import type { User } from "../types";
 
 const Sidebar: React.FC = () => {
@@ -11,6 +12,10 @@ const Sidebar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] =
+    useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -50,6 +55,51 @@ const Sidebar: React.FC = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     debouncedSearch(query);
+  };
+
+  const handleNotifications = async () => {
+    setIsNotificationDrawerOpen(true);
+
+    if (notifications.length === 0 && !isLoadingNotifications) {
+      setIsLoadingNotifications(true);
+      try {
+        const response = await notificationAPI.getNotifications();
+        setNotifications(response.data || []);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+        setNotifications([]);
+      } finally {
+        setIsLoadingNotifications(false);
+      }
+    }
+  };
+
+  const handleNotificationClick = async (notificationId: string) => {
+    try {
+      await notificationAPI.markAsRead(notificationId);
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === notificationId ? { ...n, read: true } : n)),
+      );
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const formatTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffInMinutes = Math.floor(
+      (now.getTime() - past.getTime()) / (1000 * 60),
+    );
+
+    if (diffInMinutes < 1) return "just now";
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays}d ago`;
   };
 
   return (
@@ -110,6 +160,35 @@ const Sidebar: React.FC = () => {
               />
             </svg>
             <span className="font-medium">Search</span>
+          </button>
+
+          <button
+            onClick={handleNotifications}
+            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${
+              isNotificationDrawerOpen
+                ? "bg-gray-100 text-indigo-600"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <div className="relative">
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                />
+              </svg>
+              {notifications.filter((n) => !n.read).length > 0 && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+              )}
+            </div>
+            <span className="font-medium">Notifications</span>
           </button>
 
           <Link
@@ -369,6 +448,106 @@ const Sidebar: React.FC = () => {
                     <p className="text-sm">
                       Enter a username or email to search
                     </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Drawer */}
+      {isNotificationDrawerOpen && (
+        <div
+          className="fixed inset-0 bg-opacity-50 z-50"
+          onClick={() => setIsNotificationDrawerOpen(false)}
+        >
+          <div className="fixed left-0 top-0 h-full w-96 bg-white shadow-xl">
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold">Notifications</h2>
+                <button
+                  onClick={() => setIsNotificationDrawerOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Notifications List */}
+              <div className="flex-1 overflow-y-auto">
+                {isLoadingNotifications ? (
+                  <div className="flex justify-center items-center h-32">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                  </div>
+                ) : notifications.length > 0 ? (
+                  <div className="divide-y divide-gray-100">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification._id}
+                        className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                          !notification.read ? "bg-blue-50" : ""
+                        }`}
+                        onClick={() =>
+                          handleNotificationClick(notification._id)
+                        }
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-sm font-medium text-gray-600">
+                              {notification.sender.username
+                                ?.charAt(0)
+                                .toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-900">
+                              <span className="font-medium">
+                                {notification.sender.username}
+                              </span>{" "}
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {formatTimeAgo(notification.createdAt)}
+                            </p>
+                          </div>
+                          {!notification.read && (
+                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-32 text-gray-500">
+                    <svg
+                      className="w-12 h-12 mb-3 text-gray-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                      />
+                    </svg>
+                    <p>No notifications</p>
+                    <p className="text-sm">You're all caught up!</p>
                   </div>
                 )}
               </div>

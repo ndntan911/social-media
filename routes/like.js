@@ -1,12 +1,13 @@
-const express = require('express');
-const Post = require('../models/Post');
-const Like = require('../models/Like');
-const auth = require('../middleware/auth');
+const express = require("express");
+const Post = require("../models/Post");
+const Like = require("../models/Like");
+const { createNotification } = require("../services/notificationService");
+const auth = require("../middleware/auth");
 
 const router = express.Router();
 
 // Like a post
-router.post('/:postId', auth, async (req, res) => {
+router.post("/:postId", auth, async (req, res) => {
   try {
     const postId = req.params.postId;
     const userId = req.user._id;
@@ -14,41 +15,46 @@ router.post('/:postId', auth, async (req, res) => {
     // Check if post exists
     const post = await Post.findById(postId);
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(404).json({ message: "Post not found" });
     }
 
     // Check if already liked
     const existingLike = await Like.findOne({
       user: userId,
-      post: postId
+      post: postId,
     });
 
     if (existingLike) {
-      return res.status(400).json({ message: 'Post already liked' });
+      return res.status(400).json({ message: "Post already liked" });
     }
 
     // Create like
     const like = new Like({
       user: userId,
-      post: postId
+      post: postId,
     });
 
     await like.save();
 
     // Add like to post
     await Post.findByIdAndUpdate(postId, {
-      $push: { likes: userId }
+      $push: { likes: userId },
     });
 
-    res.json({ message: 'Post liked successfully' });
+    // Create notification if user is not liking their own post
+    if (post.user.toString() !== userId.toString()) {
+      await createNotification(post.user, userId, "like", postId);
+    }
+
+    res.json({ message: "Post liked successfully" });
   } catch (error) {
-    console.error('Like post error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Like post error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 // Unlike a post
-router.delete('/:postId', auth, async (req, res) => {
+router.delete("/:postId", auth, async (req, res) => {
   try {
     const postId = req.params.postId;
     const userId = req.user._id;
@@ -56,44 +62,43 @@ router.delete('/:postId', auth, async (req, res) => {
     // Check if post exists
     const post = await Post.findById(postId);
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(404).json({ message: "Post not found" });
     }
 
     // Remove like
     await Like.findOneAndDelete({
       user: userId,
-      post: postId
+      post: postId,
     });
 
     // Remove like from post
     await Post.findByIdAndUpdate(postId, {
-      $pull: { likes: userId }
+      $pull: { likes: userId },
     });
 
-    res.json({ message: 'Post unliked successfully' });
+    res.json({ message: "Post unliked successfully" });
   } catch (error) {
-    console.error('Unlike post error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Unlike post error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 // Get likes for a post
-router.get('/:postId', async (req, res) => {
+router.get("/:postId", async (req, res) => {
   try {
     const postId = req.params.postId;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
-    const post = await Post.findById(postId)
-      .populate({
-        path: 'likes',
-        select: 'username fullName profilePicture',
-        options: { skip, limit }
-      });
+    const post = await Post.findById(postId).populate({
+      path: "likes",
+      select: "username fullName profilePicture",
+      options: { skip, limit },
+    });
 
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(404).json({ message: "Post not found" });
     }
 
     const totalLikes = post.likes.length;
@@ -103,30 +108,30 @@ router.get('/:postId', async (req, res) => {
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(totalLikes / limit),
-        totalLikes
-      }
+        totalLikes,
+      },
     });
   } catch (error) {
-    console.error('Get likes error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Get likes error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 // Check if current user liked a post
-router.get('/status/:postId', auth, async (req, res) => {
+router.get("/status/:postId", auth, async (req, res) => {
   try {
     const postId = req.params.postId;
     const userId = req.user._id;
 
     const like = await Like.findOne({
       user: userId,
-      post: postId
+      post: postId,
     });
 
     res.json({ isLiked: !!like });
   } catch (error) {
-    console.error('Check like status error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Check like status error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
