@@ -6,7 +6,7 @@ import React, {
   type ReactNode,
 } from "react";
 import type { User } from "../types";
-import { authAPI } from "../utils/api";
+import { authAPI } from "../apis";
 
 interface AuthState {
   user: User | null;

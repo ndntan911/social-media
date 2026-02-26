@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { userAPI, postAPI, followAPI } from "../utils/api";
+import { userAPI, postAPI, followAPI } from "../apis";
 import type { User, Post } from "../types";
 import { useAuth } from "../context/AuthContext";
 import ProfileTabs from "../components/ProfileTabs";

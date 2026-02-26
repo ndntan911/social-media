@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { postAPI } from "../utils/api";
+import { postAPI } from "../apis";
 import type { Post } from "../types";
 import PostCard from "../components/PostCard";
 

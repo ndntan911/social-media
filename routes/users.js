@@ -5,42 +5,6 @@ const auth = require("../middleware/auth");
 
 const router = express.Router();
 
-// Get user profile by username
-router.get("/:username", async (req, res) => {
-  try {
-    const user = await User.findOne({ username: req.params.username })
-      .select("-password")
-      .populate("posts", "image caption likesCount commentsCount createdAt")
-      .populate("followers", "username profilePicture")
-      .populate("following", "username profilePicture");
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json({
-      user: {
-        id: user._id,
-        username: user.username,
-        fullName: user.fullName,
-        bio: user.bio,
-        profilePicture: user.profilePicture,
-        followers: user.followers,
-        following: user.following,
-        posts: user.posts,
-        followersCount: user.getFollowersCount(),
-        followingCount: user.getFollowingCount(),
-        postsCount: user.getPostsCount(),
-        isVerified: user.isVerified,
-        createdAt: user.createdAt,
-      },
-    });
-  } catch (error) {
-    console.error("Get profile error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
 // Update user profile
 router.put(
   "/profile",
@@ -112,6 +76,32 @@ router.put(
 );
 
 // Search users
+router.get("/search", async (req, res) => {
+  try {
+    const query = req.query.q;
+
+    if (!query || query.trim().length === 0) {
+      return res.json([]);
+    }
+
+    const users = await User.find({
+      $or: [
+        { username: { $regex: query, $options: "i" } },
+        { fullName: { $regex: query, $options: "i" } },
+        { email: { $regex: query, $options: "i" } },
+      ],
+    })
+      .select("username fullName email profilePicture")
+      .limit(10);
+
+    res.json(users);
+  } catch (error) {
+    console.error("Search users error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Search users by query parameter (legacy route)
 router.get("/search/:query", async (req, res) => {
   try {
     const query = req.params.query;
@@ -127,6 +117,42 @@ router.get("/search/:query", async (req, res) => {
     res.json({ users });
   } catch (error) {
     console.error("Search users error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get user profile by username
+router.get("/:username", async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username })
+      .select("-password")
+      .populate("posts", "image caption likesCount commentsCount createdAt")
+      .populate("followers", "username profilePicture")
+      .populate("following", "username profilePicture");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      user: {
+        id: user._id,
+        username: user.username,
+        fullName: user.fullName,
+        bio: user.bio,
+        profilePicture: user.profilePicture,
+        followers: user.followers,
+        following: user.following,
+        posts: user.posts,
+        followersCount: user.getFollowersCount(),
+        followingCount: user.getFollowingCount(),
+        postsCount: user.getPostsCount(),
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Get profile error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });

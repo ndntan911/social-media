@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { postAPI } from "../utils/api";
+import { postAPI } from "../apis";
 import MultiFileUpload from "../components/MultiFileUpload";
 
 const CreatePost: React.FC = () => {

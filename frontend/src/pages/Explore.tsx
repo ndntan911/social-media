@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { exploreAPI } from "../utils/exploreAPI";
+import { exploreAPI } from "../apis";
 import type { Post } from "../types";
 
 const Explore: React.FC = () => {

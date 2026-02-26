@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { Post } from "../types";
-import { likeAPI, commentAPI, postAPI } from "../utils/api";
+import { likeAPI, commentAPI, postAPI } from "../apis";
 import { useAuth } from "../context/AuthContext";
 import MediaGallery from "./MediaGallery";
 
