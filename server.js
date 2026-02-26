@@ -8,6 +8,8 @@ const session = require("express-session");
 const passport = require("./config/passport");
 const path = require("path");
 const { initializeBucket } = require("./config/minio");
+const http = require("http");
+const { Server } = require("socket.io");
 
 // Import routes
 const authRoutes = require("./routes/auth");
@@ -102,6 +104,35 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+
+// Create HTTP server and Socket.IO
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+// Socket.IO connection handling
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  // Join user to their personal room for notifications
+  socket.on("join_user_room", (userId) => {
+    socket.join(`user_${userId}`);
+    console.log(`User ${userId} joined their room`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
+
+// Make io available to routes
+app.set("io", io);
+
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

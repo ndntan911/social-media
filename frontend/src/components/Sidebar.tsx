@@ -1,12 +1,14 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
 import { userAPI } from "../apis/userAPI";
 import { notificationAPI } from "../apis/notificationAPI";
 import type { User } from "../types";
 
 const Sidebar: React.FC = () => {
   const { user, logout } = useAuth();
+  const { socket } = useSocket();
   const location = useLocation();
   const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -16,6 +18,33 @@ const Sidebar: React.FC = () => {
     useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+
+  // Listen for real-time notifications
+  useEffect(() => {
+    if (socket) {
+      socket.on("new_notification", (notification) => {
+        console.log("Received real-time notification:", notification);
+        setNotifications((prev) => [notification, ...prev]);
+
+        // Show a brief visual indicator
+        const notificationBadge = document.querySelector(".notification-badge");
+        if (notificationBadge) {
+          notificationBadge.classList.add("animate-pulse");
+          setTimeout(() => {
+            notificationBadge.classList.remove("animate-pulse");
+          }, 1000);
+        }
+      });
+
+      return () => {
+        socket.off("new_notification");
+      };
+    }
+  }, [socket]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -57,20 +86,16 @@ const Sidebar: React.FC = () => {
     debouncedSearch(query);
   };
 
-  const handleNotifications = async () => {
-    setIsNotificationDrawerOpen(true);
-
-    if (notifications.length === 0 && !isLoadingNotifications) {
-      setIsLoadingNotifications(true);
-      try {
-        const response = await notificationAPI.getNotifications();
-        setNotifications(response.data || []);
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-        setNotifications([]);
-      } finally {
-        setIsLoadingNotifications(false);
-      }
+  const fetchNotifications = async () => {
+    setIsLoadingNotifications(true);
+    try {
+      const response = await notificationAPI.getNotifications();
+      setNotifications(response.data || []);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      setNotifications([]);
+    } finally {
+      setIsLoadingNotifications(false);
     }
   };
 
@@ -163,14 +188,14 @@ const Sidebar: React.FC = () => {
           </button>
 
           <button
-            onClick={handleNotifications}
+            onClick={() => setIsNotificationDrawerOpen(true)}
             className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors w-full text-left ${
               isNotificationDrawerOpen
                 ? "bg-gray-100 text-indigo-600"
                 : "text-gray-700 hover:bg-gray-100"
             }`}
           >
-            <div className="relative">
+            <div className="relative notification-badge">
               <svg
                 className="w-6 h-6"
                 fill="none"

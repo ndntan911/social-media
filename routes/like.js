@@ -43,7 +43,8 @@ router.post("/:postId", auth, async (req, res) => {
 
     // Create notification if user is not liking their own post
     if (post.user.toString() !== userId.toString()) {
-      await createNotification(post.user, userId, "like", postId);
+      const io = req.app.get("io");
+      await createNotification(post.user, userId, "like", postId, io);
     }
 
     res.json({ message: "Post liked successfully" });

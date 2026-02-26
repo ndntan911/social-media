@@ -58,7 +58,8 @@ router.post(
 
       // Create notification if user is not commenting on their own post
       if (post.user.toString() !== userId.toString()) {
-        await createNotification(post.user, userId, "comment", postId);
+        const io = req.app.get("io");
+        await createNotification(post.user, userId, "comment", postId, io);
       }
 
       // Populate user info for response
