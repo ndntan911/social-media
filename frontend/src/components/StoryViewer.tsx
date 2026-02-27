@@ -24,6 +24,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({
   initialIndex = 0,
   onClose,
 }) => {
+  console.log(stories);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [viewedStories, setViewedStories] = useState<Set<string>>(new Set());
   const { user } = useAuth();

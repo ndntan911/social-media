@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { postAPI } from "../apis";
 import type { Post } from "../types";
 import PostCard from "../components/PostCard";
-import Stories from "../components/Stories";
+import Stories, { type Story } from "../components/Stories";
 import StoryViewer from "../components/StoryViewer";
 import CreateStory from "../components/CreateStory";
 
@@ -15,7 +15,7 @@ const Feed: React.FC = () => {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const observer = useRef<IntersectionObserver | null>(null);
   const lastPostRef = useRef<HTMLDivElement | null>(null);
-  const [selectedStory, setSelectedStory] = useState<any>(null);
+  const [selectedStory, setSelectedStory] = useState<Story[]>();
   const [showCreateStory, setShowCreateStory] = useState(false);
 
   const fetchPosts = useCallback(
@@ -164,8 +164,8 @@ const Feed: React.FC = () => {
       {/* Story Viewer Modal */}
       {selectedStory && (
         <StoryViewer
-          stories={[selectedStory]} // For now, just show the selected story
-          onClose={() => setSelectedStory(null)}
+          stories={selectedStory} // For now, just show the selected story
+          onClose={() => setSelectedStory([])}
         />
       )}
 

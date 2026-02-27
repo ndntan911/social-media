@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { storyAPI } from "../apis/storyAPI";
 import type { User } from "../types";
 
-interface Story {
+export interface Story {
   _id: string;
   user: User;
   image: string;
@@ -13,7 +13,7 @@ interface Story {
 }
 
 interface StoriesProps {
-  onStoryClick?: (story: Story) => void;
+  onStoryClick?: (story: Story[]) => void;
   onAddStory?: () => void;
 }
 
@@ -132,7 +132,7 @@ const Stories: React.FC<StoriesProps> = ({ onStoryClick, onAddStory }) => {
         {Object.values(storiesByUser).map(({ user, stories: userStories }) => (
           <div key={user.id} className="flex-shrink-0">
             <button
-              onClick={() => onStoryClick?.(userStories[0])}
+              onClick={() => onStoryClick?.(userStories)}
               className="relative group"
             >
               <div
