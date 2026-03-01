@@ -21,6 +21,7 @@ const commentRoutes = require("./routes/comment");
 const exploreRoutes = require("./routes/explore");
 const notificationRoutes = require("./routes/notifications");
 const storyRoutes = require("./routes/stories");
+const chatRoutes = require("./routes/chat");
 
 const app = express();
 
@@ -93,6 +94,7 @@ app.use("/api/comment", commentRoutes);
 app.use("/api/explore", exploreRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/stories", storyRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Basic route
 app.get("/", (req, res) => {

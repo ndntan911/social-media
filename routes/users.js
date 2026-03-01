@@ -94,7 +94,7 @@ router.get("/search", async (req, res) => {
       .select("username fullName email profilePicture")
       .limit(10);
 
-    res.json(users);
+    res.json(users.map((user) => ({ ...user.toObject(), id: user._id })));
   } catch (error) {
     console.error("Search users error:", error);
     res.status(500).json({ message: "Server error" });

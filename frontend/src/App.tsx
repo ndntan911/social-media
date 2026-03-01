@@ -15,6 +15,7 @@ import CreatePost from "./pages/CreatePost";
 import Profile from "./pages/Profile";
 import Explore from "./pages/Explore";
 import AuthCallback from "./pages/AuthCallback";
+import Messages from "./pages/Messages";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -76,6 +77,14 @@ const AppRoutes: React.FC = () => {
           element={
             <Layout>
               <Profile />
+            </Layout>
+          }
+        />
+        <Route
+          path="/messages"
+          element={
+            <Layout>
+              <Messages />
             </Layout>
           }
         />

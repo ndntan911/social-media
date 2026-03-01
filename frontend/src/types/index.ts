@@ -20,6 +20,7 @@ export interface User {
   followersCount?: number;
   followingCount?: number;
   postsCount?: number;
+  isOnline?: boolean;
 }
 
 export interface Post {
